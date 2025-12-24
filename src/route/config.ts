@@ -1,6 +1,6 @@
 // src/routes/config.ts - UPDATED FOR USER MANAGEMENT
 import { Hono } from "hono";
-import { userDatabase, UserSMTPConfig } from "../services/userDatabase";
+import { userDatabase,  } from "../services/userDatabase";
 import { requireAuth } from "../middleware/auth";
 import type { SMTPDefaults } from "../types";
 
@@ -114,7 +114,7 @@ app.post("/config/smtp", async (c) => {
     return c.json({
       success: true,
       data: { ...configData, id: configId },
-      message: "✅ SMTP configuration saved successfully",
+      message: " SMTP configuration saved successfully",
       configId,
     });
   } catch (error) {
@@ -122,7 +122,7 @@ app.post("/config/smtp", async (c) => {
     return c.json(
       {
         success: false,
-        message: "❌ Failed to save SMTP configuration",
+        message: "Failed to save SMTP configuration",
       },
       500
     );

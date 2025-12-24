@@ -54,7 +54,7 @@ app.get("/dashboard/poll-status", (c) => {
         hasScheduledJobs = scheduledJobs && scheduledJobs.length > 0;
         hasRunningScheduledJobs =
           scheduledJobs &&
-          scheduledJobs.some((job) => job.status === "running");
+          scheduledJobs.some((job: any) => job.status === "running");
         dashboardState.hasScheduledJobs = hasScheduledJobs;
         dashboardState.lastScheduledCheck = now;
       } catch (error) {

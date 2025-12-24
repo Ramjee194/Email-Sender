@@ -92,7 +92,7 @@ app.get("/login", serveStatic({ path: "./public/login.html" }));
 // Routes
 app.route("/", authRoutes); // Auth routes (login, register, logout)
 app.route("/", indexRoutes); // Dashboard and main interface
-app.route("/", sendRoutes); // Email sending functionality
+app.route('/api/send', sendRoutes);
 app.route("/", reportRoutes); // Reports and analytics
 app.route("/", configRoutes); // User SMTP configurations
 app.route("/", dashboardRoutes);

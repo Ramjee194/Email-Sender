@@ -24,7 +24,7 @@
 
   // Form state
   let configs: SMTPConfig[] = [];
-  let selectedConfig: SMTPConfig | null = null;
+
   let showNewConfigForm = false;
   let isLoadingConfigs = false;
   let isLoadingEditor = false;
@@ -51,6 +51,7 @@
   let scheduledTime = '';
   let notifyEmail = '';
   let notifyBrowser = false;
+    let emailSubject = '';
   
   // Range selection
   let sendRange: 'all' | 'first' | 'range' = 'all';
@@ -58,6 +59,7 @@
   let rangeFrom = 1;
   let rangeTo = 100;
   let totalContacts = 0;
+  let selectedConfig: SMTPConfig
 
   onMount(async () => {
     await loadSMTPConfigs();
@@ -74,6 +76,109 @@
       quillEditor = null;
     }
   });
+
+  async function handleSendEmails () {
+    if (!selectedConfig) {
+        alert("Please select an SMTP configuration");
+        return;
+    }
+
+    if (!excelFile) {
+        alert("Please upload an Excel file with contacts");
+        return;
+    }
+
+    const sendCount = calculateSendCount();
+    if (sendCount === 0) {
+        alert("No contacts to send emails to");
+        return;
+    }
+
+    try {
+        // Show loading
+        const sendButton = document.querySelector('.send-button');
+        const originalText = sendButton?.innerHTML;
+        if (sendButton) {
+            sendButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+            sendButton.setAttribute('disabled', 'true');
+        }
+
+        //  REAL API CALL with FormData
+        const formData = new FormData();
+          formData.append('configId', selectedConfig.id); 
+        formData.append('subject', emailSubject);
+        formData.append('content', emailContent || '');
+        formData.append('totalContacts', sendCount.toString());
+        formData.append('sendRange', sendRange);
+       formData.append('delay', delay.toString());
+        
+        if (excelFile) {
+            formData.append('excelFile', excelFile);
+        }
+        if (htmlTemplateFile) {
+            formData.append('htmlTemplate', htmlTemplateFile);
+        }
+        if (useBatch){
+            formData.append('batchProcessing', 'true');
+            formData.append('batchSize', batchSize.toString());
+        }
+        if (scheduleEmail && scheduledTime) {
+            formData.append('schedule', scheduledTime);
+        }
+        if (notifyEmail) {
+            formData.append('notifyEmail', notifyEmail);
+        }
+
+        const response = await fetch('/send', {
+            method: 'POST',
+            body: formData
+            // No Content-Type header for FormData
+        });
+
+        const result = await response.json();
+        
+        // Reset button
+        if (sendButton) {
+            sendButton.innerHTML = originalText || 'Send Email Now';
+            sendButton.removeAttribute('disabled');
+        }
+        
+        if (response.ok && result.success) {
+            alert(`✅ ${result.totalEmails || sendCount} emails queued successfully!\nJob ID: ${result.jobId}\nEstimated time: ${result.estimatedTime}`);
+            
+            // Optional: Show success modal or redirect
+            console.log('Email job created:', result);
+            
+            // Clear form if needed
+            // emailSubject = '';
+            // emailContent = '';
+            // excelFile = null;
+            
+        } else {
+            alert(` Failed: ${result.message || 'Unknown error'}`);
+        }
+        
+    } catch (error) {
+        console.error("Error sending emails:", error);
+        
+        // Reset button
+        const sendButton = document.querySelector('.send-button');
+        if (sendButton) {
+            sendButton.innerHTML = 'Send Email Now';
+            sendButton.removeAttribute('disabled');
+        }
+        
+        //  FALLBACK TO MOCK
+        const useMock = confirm("API server may be down. Use mock send for testing?");
+        
+        if (useMock) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            alert(` ${sendCount} emails queued successfully! (Mock Mode)\nNote: Running in offline mode`);
+        } else {
+            alert(" Error sending emails. Please check API server.");
+        }
+    }
+}
 
   async function loadSMTPConfigs() {
     isLoadingConfigs = true;
@@ -168,34 +273,7 @@
     htmlTemplateFile = file;
   }
 
-  function handleSendEmails() {
-    if (!excelFile) {
-      alert('Please select an Excel file');
-      return;
-    }
-    
-    if (!selectedConfig) {
-      alert('Please select an SMTP configuration');
-      return;
-    }
-    
-    if (!subject.trim()) {
-      alert('Please enter a subject');
-      return;
-    }
-    
-    if (!emailContent.trim() && !htmlTemplateFile) {
-      alert('Please add email content or upload a template');
-      return;
-    }
-    
-    console.log('Sending emails with:', {
-      config: selectedConfig.name,
-      file: excelFile.name,
-      subject,
-      schedule: scheduleEmail ? scheduledTime : 'immediate'
-    });
-  }
+
 
   function handlePreview() {
     if (!subject.trim()) {
