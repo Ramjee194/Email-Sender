@@ -129,11 +129,10 @@
             formData.append('notifyEmail', notifyEmail);
         }
 
-        const response = await fetch('/send', {
-            method: 'POST',
-            body: formData
-            // No Content-Type header for FormData
-        });
+       const response = await fetch('/send', {
+        method: 'POST',
+        body: formData // Let the browser set the correct 'multipart/form-data' header
+    });
 
         const result = await response.json();
         
