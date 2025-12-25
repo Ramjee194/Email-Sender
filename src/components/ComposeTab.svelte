@@ -60,6 +60,7 @@
   let rangeTo = 100;
   let totalContacts = 0;
   let selectedConfig: SMTPConfig
+    let sendCount = 0;
 
   onMount(async () => {
     await loadSMTPConfigs();
@@ -88,12 +89,18 @@
         return;
     }
 
-    const sendCount = calculateSendCount();
-    if (sendCount === 0) {
-        alert("No contacts to send emails to");
-        return;
+     function calculateSendCount(): number {
+    if (!totalContacts) return 0;
+    
+    if (sendRange === 'all') return totalContacts;
+    if (sendRange === 'first') return Math.min(firstN, totalContacts);
+    if (sendRange === 'range') {
+      const start = Math.max(1, rangeFrom);
+      const end = Math.min(totalContacts, rangeTo);
+      return start <= end ? end - start + 1 : 0;
     }
-
+    return 0;
+  }
     try {
         // Show loading
         const sendButton = document.querySelector('.send-button');
@@ -110,7 +117,7 @@
         formData.append('content', emailContent || '');
         formData.append('totalContacts', sendCount.toString());
         formData.append('sendRange', sendRange);
-       formData.append('delay', delay.toString());
+       
         
         if (excelFile) {
             formData.append('excelFile', excelFile);
@@ -139,7 +146,7 @@
         // Reset button
         if (sendButton) {
             sendButton.innerHTML = originalText || 'Send Email Now';
-            sendButton.removeAttribute('disabled');
+            sendButton.removeAttribute('enable')
         }
         
         if (response.ok && result.success) {

@@ -30,6 +30,7 @@
       }
     } catch (error) {
       // Not authenticated, stay on login page
+      
     }
   });
 
@@ -122,7 +123,7 @@
       
       showAlert('success', 'Account created successfully! Redirecting...');
       setTimeout(() => {
-        goto('/dashboard');
+        goto('/');
       }, 1000);
       
     } catch (error) {
